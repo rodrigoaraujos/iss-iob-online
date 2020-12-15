@@ -1,0 +1,40 @@
+[login]
+url = 'https://www.iobonline.com.br/'
+[login.landing_page]
+[login.landing_page.login_button]
+xpath = '//*[@id="toolbar"]/div/div[2]/a[4]'
+[login.landing_page.modal]
+[login.landing_page.modal.username]
+xpath = '//*[@id="txtLogin"]'
+value = ''
+[login.landing_page.modal.password]
+xpath = '//*[@id="txtPassword"]'
+value = ''
+[login.landing_page.modal.submit_button]
+xpath = '//*[@id="form-user"]/div/table/tbody/tr[4]/td/button'
+[login.landing_page.modal.end_session]
+xpath = '//*[@id="error-message"]/div/a[1]/span'
+
+[main]
+[main.header.my_products]
+xpath = '//*[@id="main-header"]/div/nav/ul/li[4]'
+[main.header.my_products.issqn_option]
+xpath = '//*[@id="meu-produto"]/li[4]/p/span'
+
+[issqn]
+[issqn.select_state]
+xpath = '//*[@id="formCombosISS:OLRUFISS"]'
+[issqn.select_city]
+xpath = '//*[@id="formCombosISS:OLRMUNICIPIOISS"]'
+[issqn.submit_button]
+xpath = '//*[@id="formCombosISS:enviarFormulario"]'
+[issqn.law_link]
+xpath = '//*[@id="formListaServISS:ULATU-MP-ISS"]/tbody/tr[5]/td/a'
+
+[results]
+[results.item_municipal]
+xpath = '//*[@id="docBody"]/table/tbody/tr/td/table/tbody/tr/td/table[3]/tbody/tr/td/table/tbody/tr[td[1]/span/div/text()[contains(., ".")]]/td[1]/span/div'
+[results.descr_servico]
+xpath = '//*[@id="docBody"]/table/tbody/tr/td/table/tbody/tr/td/table[3]/tbody/tr/td/table/tbody/tr[td[1]/span/div/text()[contains(., ".")]]/td[2]/span/div'
+[results.aliquota]
+xpath = '//*[@id="docBody"]/table/tbody/tr/td/table/tbody/tr/td/table[3]/tbody/tr/td/table/tbody/tr[td[1]/span/div/text()[contains(., ".")]]/td[6]'

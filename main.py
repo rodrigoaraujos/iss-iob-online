@@ -1,6 +1,9 @@
 import csv
 import toml
+from datetime import datetime
+from itertools import chain
 from time import sleep
+import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -106,7 +109,6 @@ def set_city(driver, config, city):
     sleep(4)
     city_select_xpath = f'//*[@id="formCombosISS:OLRMUNICIPIOISS"]/option[text() = "{city}"]'
     city_select = driver.find_element_by_xpath(city_select_xpath)
-    print(city_select)
     city_select.click()
 
 
@@ -125,16 +127,38 @@ def access_results(driver, config):
     law_link.click()
 
 
-def get_data(driver, config):
+def get_data(driver, config, state, city):
     base_config = config['results']
-    xpath_item_mun = base_config['item_municipal']
-    xpath_desc_ser = base_config['descr_servico']
-    xpath_aliquota = base_config['aliquota']
-    item_municipal = driver.find_elements_by_xpath(
-        f'//*[@id="docBody"]/table/tbody/tr/td/table/tbody/tr/td/table[3]/tbody/tr/td/table/tbody/tr[td[1]/span/div/text()[contains(., ".")]]/td[1]/span/div')
+    xpath_items = base_config['items']['xpath']
+    elementos_items = driver.find_elements_by_xpath(xpath_items)
+    lista_valores = []
+    cod_serv_atual, desc_serv_atual = ('', '')
+    for index, linha in enumerate(elementos_items):
+        print(f'{index + 1}/{len(elementos_items)}')
+        tds = linha.find_elements_by_xpath('./td')
+        texto_tds = [td.text.strip() for td in tds]
+        if len(texto_tds) == 9 or len(texto_tds) == 6:
+            cod_serv_atual, desc_serv_atual = texto_tds[:2]
+            if len(texto_tds) == 6:
+                texto_tds.insert(2, '')
+                texto_tds.insert(3, '')
+                texto_tds.insert(4, '')
+        else:
+            texto_tds.insert(0, cod_serv_atual)
+            texto_tds.insert(1, desc_serv_atual)
 
-    print(item_municipal)
-    breakpoint()
+        texto_tds.insert(0, state)
+        texto_tds.insert(1, city)
+        lista_valores.append(texto_tds)
+
+    return lista_valores
+
+
+def create_dataframe(table):
+    df = pd.DataFrame(table)
+    df.columns = ["UF", "MUNICIPIO", "ITEM MUNICIPAL", "DESCRIÇÃO DO SERVIÇO MUNICIPAL", "CODIGO DE SERVIÇO DO PRESTADOR",
+                  "CODIGO DE SERVIÇO DO TOMADOR", "CODIGO DE SERVIÇO DESCRIÇÃO", "ALÍQUOTA", "BENEFÍCIO FISCAL", "SOCIEDADE", "COMENTÁRIO"]
+    return df
 
 
 if __name__ == "__main__":
@@ -145,10 +169,17 @@ if __name__ == "__main__":
     choose_my_products_issqn(driver, config)
     driver.switch_to.window(driver.window_handles[1])
     params = getCities()
+    repository = []
     for i in params:
-        set_state(driver, config, str(i[0]))
-        set_city(driver, config, str(i[1]))
+        state = str(i[0])
+        city = str(i[1])
+        set_state(driver, config, state)
+        set_city(driver, config, city)
         perform_search(driver, config)
         access_results(driver, config)
-        get_data(driver, config)
+        data = get_data(driver, config, state, city)
+        repository.append(data)
+    df = create_dataframe(list(chain(*repository)))
+    file_creation_date = datetime.now().strftime('%d-%m-%Y')
+    df.to_csv('importar.csv', index=False)
     driver.quit()

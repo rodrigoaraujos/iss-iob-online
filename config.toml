@@ -34,9 +34,3 @@ xpath = '//*[@id="formListaServISS:ULATU-MP-ISS"]/tbody/tr[5]/td/a'
 [results]
 [results.items]
 xpath = '//*[@id="docBody"]/table/tbody/tr/td/table/tbody/tr/td/table[3]/tbody/tr/td/table/tbody/tr[td[1]/span/div]'
-# [results.item_municipal]
-# xpath = './td[1]/span/div'
-# [results.descr_servico]
-# xpath = './td[2]/span/div'
-# [results.aliquota]
-# xpath = './td[6]'

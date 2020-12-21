@@ -12,6 +12,9 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support import expected_conditions as EC
 
 
+CSV_PATH = 'importar.csv'
+
+
 def setup():
     option = Options()
     option.headless = False
@@ -127,6 +130,14 @@ def access_results(driver, config):
     law_link.click()
 
 
+def clean(text):
+    return text.strip().replace('"', '').replace("'", '').replace('|', '-')
+
+
+def clean_texto_td(texto_tds):
+    return [clean(texto) for texto in texto_tds]
+
+
 def get_data(driver, config, state, city):
     base_config = config['results']
     xpath_items = base_config['items']['xpath']
@@ -154,6 +165,10 @@ def get_data(driver, config, state, city):
     return lista_valores
 
 
+def to_csv(df, csv_path):
+    df.to_csv(csv_path, sep='|', index=False)
+
+
 def create_dataframe(table):
     df = pd.DataFrame(table)
     df.columns = ["UF", "MUNICIPIO", "ITEM MUNICIPAL", "DESCRIÇÃO DO SERVIÇO MUNICIPAL", "CODIGO DE SERVIÇO DO PRESTADOR",
@@ -162,24 +177,28 @@ def create_dataframe(table):
 
 
 if __name__ == "__main__":
-    driver, config = setup()
-    openBrowser(driver, config)
-    login(driver, config)
-    sleep(5)
-    choose_my_products_issqn(driver, config)
-    driver.switch_to.window(driver.window_handles[1])
-    params = getCities()
-    repository = []
-    for i in params:
-        state = str(i[0])
-        city = str(i[1])
-        set_state(driver, config, state)
-        set_city(driver, config, city)
-        perform_search(driver, config)
-        access_results(driver, config)
-        data = get_data(driver, config, state, city)
-        repository.append(data)
-    df = create_dataframe(list(chain(*repository)))
-    file_creation_date = datetime.now().strftime('%d-%m-%Y')
-    df.to_csv('importar.csv', index=False)
-    driver.quit()
+    try:
+        driver, config = setup()
+        openBrowser(driver, config)
+        login(driver, config)
+        sleep(5)
+        choose_my_products_issqn(driver, config)
+        driver.switch_to.window(driver.window_handles[1])
+        params = getCities()
+        repository = []
+        for i in params:
+            state = str(i[0])
+            city = str(i[1])
+            set_state(driver, config, state)
+            set_city(driver, config, city)
+            perform_search(driver, config)
+            access_results(driver, config)
+            data = get_data(driver, config, state, city)
+            repository.append(data)
+        df = create_dataframe(list(chain(*repository)))
+        to_csv(df, CSV_PATH)
+        driver.quit()
+    except Exception as ex:
+        table = {'status': 'error', 'msg': clean(str(ex))}
+        df = pd.DataFrame(table, index=[0])
+        to_csv(df, CSV_PATH)

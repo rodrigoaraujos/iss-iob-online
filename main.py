@@ -1,5 +1,6 @@
 import csv
 import toml
+from traceback import format_exc
 from datetime import datetime
 from itertools import chain
 from time import sleep
@@ -138,42 +139,27 @@ def clean_texto_td(texto_tds):
     return [clean(texto) for texto in texto_tds]
 
 
-def get_data(driver, config, state, city):
+def get_df(driver, config, state, city):
     base_config = config['results']
-    xpath_items = base_config['items']['xpath']
-    elementos_items = driver.find_elements_by_xpath(xpath_items)
-    lista_valores = []
-    cod_serv_atual, desc_serv_atual = ('', '')
-    for index, linha in enumerate(elementos_items):
-        print(f'{index + 1}/{len(elementos_items)}')
-        tds = linha.find_elements_by_xpath('./td')
-        texto_tds = [td.text.strip() for td in tds]
-        if len(texto_tds) == 9 or len(texto_tds) == 6:
-            cod_serv_atual, desc_serv_atual = texto_tds[:2]
-            if len(texto_tds) == 6:
-                texto_tds.insert(2, '')
-                texto_tds.insert(3, '')
-                texto_tds.insert(4, '')
-        else:
-            texto_tds.insert(0, cod_serv_atual)
-            texto_tds.insert(1, desc_serv_atual)
+    xpath_tables = base_config['tables']['xpath']
+    tables = driver.find_elements_by_xpath(xpath_tables)
+    try:
+        converters = {i: clean for i in range(9)}
+        dfs = [pd.read_html(table.get_attribute(
+            'outerHTML'), header=1, converters=converters)[0] for table in tables]
+    except IndexError:
+        converters = {i: clean for i in range(6)}
+        dfs = [pd.read_html(table.get_attribute(
+            'outerHTML'), header=1, converters=converters)[0] for table in tables]
 
-        texto_tds.insert(0, state)
-        texto_tds.insert(1, city)
-        lista_valores.append(texto_tds)
-
-    return lista_valores
+    df = pd.concat(dfs)
+    df['UF'] = state
+    df['CIDADE'] = city
+    return df
 
 
 def to_csv(df, csv_path):
     df.to_csv(csv_path, sep='|', index=False)
-
-
-def create_dataframe(table):
-    df = pd.DataFrame(table)
-    df.columns = ["UF", "MUNICIPIO", "ITEM MUNICIPAL", "DESCRIÇÃO DO SERVIÇO MUNICIPAL", "CODIGO DE SERVIÇO DO PRESTADOR",
-                  "CODIGO DE SERVIÇO DO TOMADOR", "CODIGO DE SERVIÇO DESCRIÇÃO", "ALÍQUOTA", "BENEFÍCIO FISCAL", "SOCIEDADE", "COMENTÁRIO"]
-    return df
 
 
 if __name__ == "__main__":
@@ -193,12 +179,14 @@ if __name__ == "__main__":
             set_city(driver, config, city)
             perform_search(driver, config)
             access_results(driver, config)
-            data = get_data(driver, config, state, city)
-            repository.append(data)
-        df = create_dataframe(list(chain(*repository)))
+            city_df = get_df(driver, config, state, city)
+            repository.append(city_df)
+        breakpoint()
+        df = pd.concat(repository)
         to_csv(df, CSV_PATH)
         driver.quit()
     except Exception as ex:
-        table = {'status': 'error', 'msg': clean(str(ex))}
+        table = {'status': 'error', 'msg': clean(
+            f'{str(ex)}\n{format_exc()}')}
         df = pd.DataFrame(table, index=[0])
         to_csv(df, CSV_PATH)

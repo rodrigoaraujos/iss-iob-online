@@ -6,10 +6,10 @@ xpath = '//*[@id="toolbar"]/div/div[2]/a[4]'
 [login.landing_page.modal]
 [login.landing_page.modal.username]
 xpath = '//*[@id="txtLogin"]'
-value = ''
+value = 'rodrigoaraujo'
 [login.landing_page.modal.password]
 xpath = '//*[@id="txtPassword"]'
-value = ''
+value = 'mudar1234'
 [login.landing_page.modal.submit_button]
 xpath = '//*[@id="form-user"]/div/table/tbody/tr[4]/td/button'
 [login.landing_page.modal.end_session]
@@ -32,5 +32,8 @@ xpath = '//*[@id="formCombosISS:enviarFormulario"]'
 xpath = '//*[@id="formListaServISS:ULATU-MP-ISS"]/tbody/tr[5]/td/a'
 
 [results]
+[results.tables]
+xpath = '//*[@id="docBody"]/table/tbody/tr/td/table/tbody/tr/td/table[3]/tbody/tr/td/table'
 [results.items]
 xpath = '//*[@id="docBody"]/table/tbody/tr/td/table/tbody/tr/td/table[3]/tbody/tr/td/table/tbody/tr[td[1]/span/div]'
+
